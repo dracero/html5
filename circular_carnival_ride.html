@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Gravitron</title>
+</head>
+
+<body style="font-family:sans-serif; font-size:15px; width:640px; margin-left:auto; margin-right:auto;">
+<center>
+<H3> Gravitron</H3>
+</center>
+    <canvas id="myCanvas" width="640" height="440"></canvas>
+<center>
+    <div id="buttons">
+      <input type="button" id="play" value="Play" onclick="play()">
+      <input type="button" id="pause" value="Pause" onclick="pause()">
+      <input type="button" id="stepback" value="<< Step" onclick="stepBack()">
+      <input type="button" id="stepforward" value="Step >>" onclick="stepForward()">
+      <input type="button" id="reset" value="Reset" onclick="reset()">
+    </div>
+    <BR>
+
+         <div>Coefficient of static friction</div>
+     <div id="slider1">
+      0.5 <input type="range" id="currentmuValue" min="0.5" max="1.0" value="0.8" step="0.02" oninput="showmu(this.value)" onchange="showmu(this.value)"> 1.0
+<div id="initialmuValue">0.8</div>
+    </div>
+
+</center>
+
+  <script>
+
+// Simulation first posted on 7-12-2016, written by Andrew Duffy
+
+      function showmu(newmu)
+      {
+             //get the element
+             var display = document.getElementById("initialmuValue");
+             //show the amount
+             display.innerHTML=newmu;
+             mu = Number(newmu);
+             reset();
+     }
+
+
+      function play() {
+        window.clearTimeout(timer);
+        runFlag = 1;
+        runMotion();
+
+      }
+
+      function pause() {
+        window.clearTimeout(timer);
+        runFlag = 0;
+
+      }
+
+      function stepForward() {
+        window.clearTimeout(timer);
+        runFlag = 1;
+        drawMotion();
+
+      }
+
+      function stepBack() {
+        window.clearTimeout(timer);
+        index = index-2;
+        if (index < -1) index = -1;
+        time = index/50;
+        if ((mode == 2) && (time < slideTime)) mode = 1;
+        if ((mode = 3) && (yBlock < (yBase + 78 - blockSize))) mode = 2;
+        xPos = xBase;
+        runFlag = 1;
+        drawMotion();
+
+      }
+
+
+      function reset() {
+        window.clearTimeout(timer);
+        index = -1;
+        time = -deltat;
+        mode = 1;
+
+        runFlag = 1;
+        drawMotion();
+
+      }
+
+
+      var canvas = document.getElementById("myCanvas");
+      var context = canvas.getContext("2d");
+      var index = -1;
+
+      var xBase = 100;     // for the drawing
+      var xBase2 = 100;   // for the graph
+      var yBase = 320;     // for the drawing
+      var yBase2 = 70;    // for the graph
+      var xInit = 37;
+      var graphType = 1;
+      var graphTitle = 'Force vs. time';
+      var yAxisTitle = 'Force (N)';
+      var xAxisTitle = 't (s)';
+      var xIncrement = 2;
+      var xNumDecimals = 1;
+      var yIncrement = 5;
+      var yNumDecimals = 0;
+      var graphY = 4;
+      var graphX = 10;
+      var yStart = yBase+120;
+      var plotColor = '#ff00ff';
+      var scenario = 1;
+      var radius = 8;
+      var theta = 0;
+      var omega_init = 5.0;
+      var omega = omega_init;
+      var alpha = -0.2;
+      var xBlock = 0.0;
+      var yBlock = 0.0;
+      var blockSize = 20;
+      var Fg = 5;
+      var Fs = 5;
+      var Fn;
+      var mu = 0.8;
+      var mode = 1;
+      var deltat = 1/50.0;
+      var time = -deltat;
+      var slideTime = 0.0;
+      var timer;
+      var runFlag = 1;
+
+      reset();
+
+    function drawMotion() {
+
+  //    console.log("In the drawMotion function, with runFlag = " + runFlag );
+
+      if ((index >= 1000) || (time >= (50.0-deltat))) runFlag = 0;
+
+  //    console.log("In the drawMotion function, with runFlag = " + runFlag + " Fx = " + Fx);
+
+      if (runFlag == 1) {    //      run if runFlag equal 1, not if equal 0
+        // clear
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        index = index + 1;
+
+        // set background color for the entire thing
+           context.fillStyle = "#ffd";
+           context.fillRect(0, 0, canvas.width, canvas.height);
+
+        // set background color for the graph
+           context.fillStyle = "#eff";
+           context.fillRect(xBase2, yBase2, 40*graphX, 40*graphY);
+
+           var axisLabel = '';
+           var axisValue = 0;
+
+         // vertical grid lines
+         context.lineWidth = 2;
+         context.strokeStyle = '#888';
+
+         for (var i = 0; i <= graphX; i++) {
+           context.beginPath();
+           context.moveTo(xBase2+40*i, yBase2);
+           context.lineTo(xBase2+40*i, yBase2+40*graphY+10);
+           context.stroke();
+           context.font = '14pt Calibri';
+           context.fillStyle = 'black';
+           context.textAlign = 'center';
+           context.textBaseline = 'middle';
+           axisValue = xIncrement*(i);
+           axisLabel = axisValue.toFixed(xNumDecimals);
+           context.fillText(axisLabel, xBase2+40*i, yBase2+40*graphY+20);
+          }
+
+         // horizontal grid lines
+         for (i = 0; i <= graphY; i++) {
+           context.beginPath();
+           context.moveTo(xBase2-10, yBase2+40*i);
+           context.lineTo(xBase2+40*graphX, yBase2+40*i);
+           context.stroke();
+           context.font = '14pt Calibri';
+           context.fillStyle = 'black';
+           context.textAlign = 'center';
+           context.textBaseline = 'middle';
+           axisValue = yIncrement*(4-i);
+           axisLabel = axisValue.toFixed(yNumDecimals);
+           context.fillText(axisLabel, xBase2-30, yBase2+40*i);
+
+          }
+
+         // x-axis
+           context.strokeStyle = '#000';
+           context.lineWidth = 4;
+           context.beginPath();
+           context.moveTo(xBase2-1, yBase2+40*graphY);
+           context.lineTo(xBase2+40*graphX+20, yBase2+40*graphY);
+           context.stroke();
+           context.moveTo(xBase2+40*graphX+10, yBase2+40*graphY-6);
+           context.lineTo(xBase2+40*graphX+20, yBase2+40*graphY);
+           context.lineTo(xBase2+40*graphX+10, yBase2+40*graphY+6);
+           context.lineJoin = 'miter';
+           context.stroke();
+           context.font = '16pt Calibri';
+           context.fillStyle = 'black';
+           context.textAlign = 'left';
+           context.fillText(xAxisTitle, xBase2+40*graphX+24, yBase2+40*graphY);
+
+         // y-axis
+           context.strokeStyle = '#000';
+           context.beginPath();
+           context.moveTo(xBase2, yBase2-20);
+           context.lineTo(xBase2, yBase2+40*graphY);
+           context.stroke();
+           context.moveTo(xBase2-6, yBase2-10);
+           context.lineTo(xBase2, yBase2-20);
+           context.lineTo(xBase2+6, yBase2-10);
+           context.lineJoin = 'miter';
+           context.stroke();
+           context.strokeStyle = '#000';
+           context.textAlign = 'center';
+  //         console.log("In the drawMotion function, with yAxisTitle = " + yAxisTitle + xBase2 );
+
+           context.font = '16pt Calibri';
+           context.fillStyle = 'black';
+           context.fillText(yAxisTitle, xBase2-45, 42);
+
+
+
+        // draw the scenario
+
+        // draw the cylinder
+           context.strokeStyle = '#000';
+           context.lineWidth = 4;
+           context.beginPath();
+           context.moveTo(xBase, yBase);
+           context.lineTo(xBase, yBase+80);
+           context.lineTo(xBase+160, yBase+80);
+           context.lineTo(xBase+160, yBase);
+           context.stroke();
+
+        //  draw the block in the cylinder
+            time = time + deltat;
+            theta = omega_init*time + 0.5*alpha*time*time;
+            omega = omega_init + alpha*time;
+            Fn = 0.8*omega*omega;
+            Fs = mu*Fn;
+            yBlock = yBase + 20;
+            if (Fs > Fg) {
+              Fs = Fg;
+              }
+            else {
+              if (mode == 1) {
+                mode = 2;
+                slideTime = time;
+              }
+              yBlock = yBase + 20 + (3.0-mu)*(slideTime - time)*(slideTime - time);
+              if (yBlock > (yBase + 78 - blockSize)) {
+                yBlock = yBase + 78 - blockSize;
+                mode = 3;
+              }
+  //            console.log(slideTime + "  " + yBlock);
+            }
+            xBlock = xBase + 80 - blockSize/2 + (80-blockSize/2)*Math.cos(theta);
+            context.fillStyle = "#f66";
+            context.fillRect(xBlock, yBlock,blockSize,blockSize);
+
+        // draw a copy of the cylinder
+           context.strokeStyle = '#000';
+           context.lineWidth = 4;
+           var xOffset = 240;
+           context.beginPath();
+           context.moveTo(xBase+xOffset, yBase);
+           context.lineTo(xBase+xOffset, yBase+80);
+           context.lineTo(xBase+160+xOffset, yBase+80);
+           context.lineTo(xBase+160+xOffset, yBase);
+           context.stroke();
+
+        //  draw a copy of the block in the cylinder, for the free-body diagram
+            theta = 0.0;
+            xBlock = xBase + 80 - blockSize/2 + (80-blockSize/2)*Math.cos(theta);
+            context.fillStyle = "#f66";
+            context.fillRect(xBlock+xOffset, yBlock,blockSize,blockSize);
+
+        //  draw the free-body diagram
+            drawArrow(-Fn,0,xBlock+xOffset,yBlock + blockSize/2 ,"blue");  // normal force
+            drawArrow(0,-Fg,xBlock+xOffset+ blockSize/2,yBlock + blockSize ,"#338833");  // gravity
+            if (mode == 1) drawArrow(0,Fs,xBlock+xOffset+ blockSize/2,yBlock ,"#cc00cc");  // static friction
+            if (mode == 2) drawArrow(0,0.8*Fs,xBlock+xOffset+ blockSize/2,yBlock ,"#cc00cc");  // kinetic friction
+            if (mode == 3) drawArrow(0,Fg,xBlock+xOffset+ blockSize/2,yBlock ,"blue");  // normal
+
+            drawArrow(0,mu*Fn,xBlock+xOffset+ blockSize/2 + 40,yBlock ,"red");  // max friction
+
+        //  draw the graph of the force of gravity
+           context.strokeStyle = '#338833';
+           context.lineWidth = 4;
+           context.beginPath();
+           context.moveTo(xBase2, yBase2+40*graphY-Fg*40/yIncrement);
+           for (var i = 1; i <= index; i++) {
+             context.lineTo(xBase2+(i*deltat*40/xIncrement), yBase2+40*graphY-Fg*40/yIncrement);
+           }
+           context.stroke();
+
+        //  draw the graph of the max possible friction force
+           context.strokeStyle = 'red';
+           context.lineWidth = 4;
+           context.beginPath();
+           context.moveTo(xBase2, yBase2+40*graphY-mu*0.8*omega_init*omega_init*40/yIncrement);
+           for (var i = 1; i <= index; i++) {
+             var newt = i*deltat;
+             var newomega = omega_init + alpha*newt;
+             context.lineTo(xBase2+(i*deltat*40/xIncrement), yBase2+40*graphY-mu*0.8*newomega*newomega*40/yIncrement);
+           }
+           context.stroke();
+
+ //     console.log("In the drawMotion function, with runFlag = " + runFlag + " x2 = " + x2);
+
+
+           // graph title
+           context.font = 'bold 16pt Calibri';
+           context.fillStyle = 'purple';
+           context.textAlign = 'center';
+           context.fillText(graphTitle, (canvas.width)/2, 35);
+
+           context.font = '16pt Calibri';
+           context.fillStyle = 'black';
+
+           var timeLabel = 't = ';
+           timeLabel = timeLabel + time.toFixed(2) + ' s';
+           context.textAlign = 'left';
+           context.fillText(timeLabel, xBase+400, 40);
+
+           context.fillStyle = 'red';
+           context.fillText("Max. possible force of static friction", xBase2+50+30*mu, yBase2 + 130 - 100*mu);
+
+           context.fillStyle = '#338833';
+           context.fillText("Force of gravity", xBase2+20, yBase2 + 130);
+
+           context.fillStyle = 'red';
+           context.fillText("F", xBlock+xOffset+ blockSize/2 + 46,yBlock - 10);
+           context.font = '12pt Calibri';
+           context.fillText("s,max", xBlock+xOffset+ blockSize/2 + 54,yBlock - 4);
+
+           context.font = '16pt Calibri';
+           context.fillStyle = 'blue';
+           context.fillText("F", xBlock+xOffset -5*Fn - 16,yBlock + blockSize/2 - 16);
+           context.font = '12pt Calibri';
+           context.fillText("N", xBlock+xOffset- 5*Fn - 16 + 10,yBlock + blockSize/2 - 10);
+
+           context.font = '16pt Calibri';
+           context.fillStyle = '#338833';
+           context.fillText("mg", xBlock+xOffset+ blockSize/2 - 34,yBlock + blockSize + 20);
+
+           context.font = '16pt Calibri';
+           context.fillStyle = '#cc00cc';
+           if (mode == 3) context.fillStyle = 'blue';
+           context.fillText("F", xBlock+xOffset+ blockSize/2 - 24,yBlock - 24);
+           context.font = '12pt Calibri';
+           if (mode == 1) context.fillText("s", xBlock+xOffset+ blockSize/2 - 17,yBlock - 16);
+           if (mode == 2) context.fillText("k", xBlock+xOffset+ blockSize/2 - 17,yBlock - 16);
+           if (mode == 3) context.fillText("N", xBlock+xOffset+ blockSize/2 - 17,yBlock - 16);
+
+      }
+    }
+
+    function runMotion() {
+        drawMotion();
+        if (runFlag == 1) {
+          timer = window.setTimeout(runMotion, 1000/60);
+        }
+      }
+
+    function drawArrow(Fx,Fy,Px,Py, arrowColor) {
+           var theta = Math.atan2(Fy,Fx);
+           context.strokeStyle = arrowColor;
+           context.lineWidth = 4;
+           context.beginPath();
+           context.moveTo(Px, Py);
+           context.lineTo(Px+5.0*Fx, Py-5.0*Fy);
+           context.stroke();
+
+           context.lineWidth = 2;
+
+           var Fmag = Math.sqrt(Fx*Fx+Fy*Fy);
+           if (Fmag > 5) Fmag = 5;
+
+           context.fillStyle = arrowColor;
+           context.beginPath();
+           context.moveTo(Px+5.0*Fx-3*Fmag*Math.cos(theta+0.25*(Math.PI/2)),Py-5.0*Fy+3*Fmag*Math.sin(theta+0.25*(Math.PI/2)));
+           context.lineTo(Px+5.0*Fx,Py-5.0*Fy);
+           context.lineTo(Px+5.0*Fx-3*Fmag*Math.cos(theta-0.25*(Math.PI/2)),Py-5.0*Fy+3*Fmag*Math.sin(theta-0.25*(Math.PI/2)));
+
+           context.stroke();
+           context.fill();
+
+    }
+
+
+  </script>
+
+<p>This shows a toy version of the classic carnival ride (the Gravitron) in which the ride spins and you are pinned to the wall, rotating
+with the ride. In some versions, they even drop the floor out from under you.
+In this simulation, a block rotates with a cylinder, but the cylinder is slowing down at a constant rate. At some point,
+there is no longer enough force to keep the block up, so it slides down the wall. The right-hand view shows the block's free-body
+diagram. </p>
+
+<p>Simulation first posted on 7-12-2016. Written by Andrew Duffy</p>
+
+    <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a><br />This <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/InteractiveResource" rel="dct:type">work</span> by <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">Andrew Duffy</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.<br />This simulation can be found in the collection at <a xmlns:dct="http://purl.org/dc/terms/" href="http://physics.bu.edu/~duffy/classroom.html" rel="dct:source">http://physics.bu.edu/~duffy/classroom.html</a>.
+
+</body>
+</html>
