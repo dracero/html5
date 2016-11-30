@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html >
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="index.css">
+
+  <meta charset="utf-8">
+  <title>The Bowling Ball Problem</title>
+</head>
+
+<body id="principal">
+<center>
+    <canvas id="myCanvas" width="650"  height="385" ></canvas>
+    <div id="buttons">
+      <input type="button" id="play" value="Play" onclick="play()">
+      <input type="button" id="pause" value="Pause" onclick="pause()">
+      <input type="button" id="stepback" value="<< Step" onclick="stepBack()">
+      <input type="button" id="stepforward" value="Step >>" onclick="stepForward()">
+      <input type="button" id="reset" value="Reset" onclick="reset()">
+    </div>
+<div id="menu">
+  
+    <p><input type="button" id="play" value="Play" onclick="play()"></p>
+    <p><input type="button" id="pause" value="Pause" onclick="pause()"></p>
+    <p><input type="button" id="stepback" value="<< Step" onclick="stepBack()"></p>
+    <p><input type="button" id="stepforward" value="Step >>" onclick="stepForward()"></p>
+    <p><input type="button" id="stepforward" value="Step >>" onclick="stepForward()"></p>
+  
+</div> 	
+	
+<BR>
+     <div id="muslider">
+      Coefficient of kinetic friction: 0.05 <input type="range" id="initialmu" min="0.05"
+      max="0.25" value="0.1" step="0.01" oninput="showmuValue(this.value)" onchange="showmuValue(this.value)"> 0.25 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+<div id="initialmuValue">0.10</div>
+    </div>
+    <div id="moreButtons">Graph:
+      <input type="button" id="graph1" value="Position vs. time" onclick="setGraph(1)">
+      <input type="button" id="graph2" value="Velocity vs. time" onclick="setGraph(2)">
+    </div>
+    <div id="evenMoreButtons">Shape:
+      <input type="button" id="shape1" value="Solid sphere" onclick="setShape(1)">
+      <input type="button" id="shape2" value="Uniform disk" onclick="setShape(2)">
+      <input type="button" id="shape3" value="Hollow sphere" onclick="setShape(3)">
+    </div>
+
+
+</center>
+
+ 
+
+  <center><p>Note that the first 0.4 m is completely frictionless.</p></center>
+
+    <center><p>The velocity graph is more interesting than the position graph - make sure you understand it.</p></center>
+
+<script src="index.js"></script>
+</body>
+</html>

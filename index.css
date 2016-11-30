@@ -1,0 +1,22 @@
+#principal{
+            font-family:sans-serif; 
+			font-size:15px; 
+			width:auto; 
+			margin-left:auto; 
+			margin-right:auto;
+}	
+@media (max-width: 650px) {
+  #buttons {
+	display: none;
+  }
+}
+
+
+@media (min-width: 651px){
+  #menu {
+    display: none;
+  }
+}
+
+
+
